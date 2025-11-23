@@ -6,7 +6,7 @@ int main() {
 
     float radius = 20.f;
     sf::Vector2f position(200.f, 150.f);
-    sf::Vector2f velocity(220.f, 160.f); // px per detik
+    sf::Vector2f velocity(220.f, 160.f); 
     sf::Clock clock;
 
     while (window.isOpen()) {
@@ -22,10 +22,9 @@ int main() {
         const float w = static_cast<float>(size.x);
         const float h = static_cast<float>(size.y);
 
-        // Update posisi
+        
         position += velocity * dt;
 
-        // Bounce horizontal
         if (position.x - radius <= 0.f) {
             position.x = radius;
             velocity.x = -velocity.x;
@@ -34,7 +33,7 @@ int main() {
             velocity.x = -velocity.x;
         }
 
-        // Bounce vertikal
+        
         if (position.y - radius <= 0.f) {
             position.y = radius;
             velocity.y = -velocity.y;
