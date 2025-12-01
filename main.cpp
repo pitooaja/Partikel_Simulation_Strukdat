@@ -305,17 +305,18 @@ int main() {
         cursor.setPosition(mouse);
         window.draw(cursor);
 
-        // Draw UI with formatted speed
-        std::ostringstream speedStream;
-        speedStream << std::fixed << std::setprecision(1) << speedFactor;
+        
+       // Draw UI
+    std::ostringstream speedStream;
+    speedStream << std::fixed << std::setprecision(1) << speedFactor;
 
-        uiText.setString(
-            "FPS: " + to_string(int(fps)) +
-            " | Particles: " + to_string(particles.size()) +
-            " | Mode: " + (useQuadtree ? "Quadtree" : "Brute Force") +
-            " | Speed: " + speedStream.str()
-        );
-        window.draw(uiText);
+    uiText.setString(
+        "FPS: " + to_string(int(fps)) +
+        " | Particles: " + to_string(particles.size()) +
+        " | Mode: " + (useQuadtree ? "Quadtree" : "Brute Force") +
+        " | Speed: " + speedStream.str()
+);
+window.draw(uiText);
 
         window.display();
     }
