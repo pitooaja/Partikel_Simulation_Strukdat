@@ -13,6 +13,24 @@ using namespace std;
 float speedFactor = 5.0f;
 
 // --------------------------------------------------
+// AESTHETIC COLOR PALETTE
+// --------------------------------------------------
+vector<sf::Color> aestheticPalette = {
+    sf::Color(255, 0, 128),    // Hot Magenta
+    sf::Color(255, 20, 147),   // Deep Pink
+    sf::Color(186, 85, 211),   // Orchid Purple
+    sf::Color(142, 45, 226),   // Electric Purple
+    sf::Color(0, 206, 209),    // Turquoise
+    sf::Color(64, 224, 208),   // Bright Cyan
+    sf::Color(0, 245, 255),    // Neon Cyan
+    sf::Color(178, 69, 146)    // Rose Magenta
+};
+
+sf::Color getRandomAestheticColor() {
+    return aestheticPalette[rand() % aestheticPalette.size()];
+}
+
+// --------------------------------------------------
 // BASIC PARTICLE
 // --------------------------------------------------
 struct Particle {
@@ -20,12 +38,16 @@ struct Particle {
     sf::Vector2f vel;
     float radius;
     float mass;
+    int id;
+    sf::Color color; // Warna unik tiap partikel
 
-    Particle(float x, float y) {
+    Particle(float x, float y, int particleId) {
         pos = sf::Vector2f(x, y);
         vel = sf::Vector2f((rand() % 100 - 50) / 5.f, (rand() % 100 - 50) / 5.f);
         radius = 6.f;
         mass = radius * 10.f;
+        id = particleId;
+        color = getRandomAestheticColor(); // Random aesthetic color
     }
 
     void update(float dt, sf::Vector2u win) {
@@ -37,11 +59,11 @@ struct Particle {
         if (pos.y > win.y - radius) { pos.y = win.y - radius; vel.y *= -1; }
     }
 
-    void draw(sf::RenderWindow& win, sf::Color c) {
+    void draw(sf::RenderWindow& win) {
         sf::CircleShape s(radius);
         s.setOrigin(sf::Vector2f(radius, radius));
         s.setPosition(pos);
-        s.setFillColor(c);
+        s.setFillColor(color); // Pakai warna unik partikel
         win.draw(s);
     }
 };
@@ -64,30 +86,30 @@ struct Rect {
 };
 
 // --------------------------------------------------
-// QUADTREE
+// QUADTREE - ]untuk menyimpan particle index
 // --------------------------------------------------
 struct Quadtree {
     Rect boundary;
     int capacity;
-    vector<sf::Vector2f> points;
+    vector<int> particleIndices; // simpan index particle, bukan posisi
 
     bool divided = false;
     Quadtree *NE = nullptr, *NW = nullptr, *SE = nullptr, *SW = nullptr;
 
     Quadtree(Rect b, int cap) : boundary(b), capacity(cap) {}
 
-    bool insert(const sf::Vector2f& p) {
+    bool insert(const sf::Vector2f& p, int particleIdx) {
         if (!boundary.contains(p)) return false;
 
-        if (points.size() < capacity) {
-            points.push_back(p);
+        if (particleIndices.size() < capacity) {
+            particleIndices.push_back(particleIdx);
             return true;
         }
 
         if (!divided) subdivide();
 
-        return NE->insert(p) || NW->insert(p) ||
-               SE->insert(p) || SW->insert(p);
+        return NE->insert(p, particleIdx) || NW->insert(p, particleIdx) ||
+               SE->insert(p, particleIdx) || SW->insert(p, particleIdx);
     }
 
     void subdivide() {
@@ -102,19 +124,18 @@ struct Quadtree {
         divided = true;
     }
 
-    void query(const Rect& area, vector<sf::Vector2f>& found) {
+    void queryIndices(const Rect& area, vector<int>& found) {
         if (!boundary.intersects(area)) return;
 
-        for (auto& p : points)
-            if (area.contains(p))
-                found.push_back(p);
+        for (auto idx : particleIndices)
+            found.push_back(idx);
 
         if (!divided) return;
 
-        NE->query(area, found);
-        NW->query(area, found);
-        SE->query(area, found);
-        SW->query(area, found);
+        NE->queryIndices(area, found);
+        NW->queryIndices(area, found);
+        SE->queryIndices(area, found);
+        SW->queryIndices(area, found);
     }
 
     void draw(sf::RenderWindow& win) {
@@ -190,10 +211,12 @@ int main() {
     window.setFramerateLimit(60);
 
     vector<Particle> particles;
+    int particleIdCounter = 0;
     for (int i = 0; i < 300; i++)
-        particles.emplace_back((float)(rand() % 1200), (float)(rand() % 600));
+        particles.emplace_back((float)(rand() % 1200), (float)(rand() % 600), particleIdCounter++);
 
     bool useQuadtree = true;
+    int collisionChecks = 0; // counter untuk debug
 
     // Load font
     sf::Font font;
@@ -237,7 +260,9 @@ int main() {
                 // Add/remove particles
                 if (keyEvent->code == sf::Keyboard::Key::Q) {
                     for (int i = 0; i < 100; i++)
-                        particles.emplace_back((float)(rand() % window.getSize().x), (float)(rand() % window.getSize().y));
+                        particles.emplace_back((float)(rand() % window.getSize().x), 
+                                             (float)(rand() % window.getSize().y), 
+                                             particleIdCounter++);
                 }
                 if (keyEvent->code == sf::Keyboard::Key::W) {
                     for (int i = 0; i < 100 && !particles.empty(); i++)
@@ -250,42 +275,72 @@ int main() {
         for (auto& p : particles)
             p.update(dt, window.getSize());
 
-        // Brute force collision
-        for (size_t i = 0; i < particles.size(); i++)
-            for (size_t j = i + 1; j < particles.size(); j++)
-                resolveCollision(particles[i], particles[j]);
-
-        // Build quadtree
-        Rect world{0.f, 0.f, (float)window.getSize().x, (float)window.getSize().y};
-        Quadtree qt(world, 6);
-        for (auto& p : particles)
-            qt.insert(p.pos);
-
-        // Cursor
-        sf::Vector2i mouseI = sf::Mouse::getPosition(window);
-        sf::Vector2f mouse((float)mouseI.x, (float)mouseI.y);
-        float radius = 50.f;
-
-        vector<sf::Vector2f> neighbors;
+        // ============================================
+        // COLLISION DETECTION 
+        // ============================================
+        collisionChecks = 0;
+        
         if (useQuadtree) {
-            Rect area{mouse.x - radius, mouse.y - radius, radius * 2, radius * 2};
-            qt.query(area, neighbors);
+            // MODE QUADTREE - Optimized O(n log n)
+            Rect world{0.f, 0.f, (float)window.getSize().x, (float)window.getSize().y};
+            Quadtree qt(world, 4); // capacity 4 untuk hasil optimal
+            
+            // Build quadtree dengan index particle
+            for (size_t i = 0; i < particles.size(); i++)
+                qt.insert(particles[i].pos, i);
+            
+            // Check collision hanya dengan neighbor terdekat
+            for (size_t i = 0; i < particles.size(); i++) {
+                Particle& p = particles[i];
+                float searchRadius = p.radius * 4; // area pencarian
+                
+                Rect searchArea{
+                    p.pos.x - searchRadius, 
+                    p.pos.y - searchRadius,
+                    searchRadius * 2, 
+                    searchRadius * 2
+                };
+                
+                vector<int> nearbyIndices;
+                qt.queryIndices(searchArea, nearbyIndices);
+                
+                // Check collision hanya dengan nearby particles
+                for (int j : nearbyIndices) {
+                    if (j > (int)i) { // hindari duplikasi check
+                        resolveCollision(particles[i], particles[j]);
+                        collisionChecks++;
+                    }
+                }
+            }
+            
         } else {
-            for (auto& p : particles) {
-                float dx = p.pos.x - mouse.x;
-                float dy = p.pos.y - mouse.y;
-                if (sqrt(dx*dx + dy*dy) <= radius)
-                    neighbors.push_back(p.pos);
+            // MODE BRUTE FORCE - O(n²)
+            for (size_t i = 0; i < particles.size(); i++) {
+                for (size_t j = i + 1; j < particles.size(); j++) {
+                    resolveCollision(particles[i], particles[j]);
+                    collisionChecks++;
+                }
             }
         }
+
+        // Build quadtree untuk cursor (tetap seperti sebelumnya)
+        Rect world{0.f, 0.f, (float)window.getSize().x, (float)window.getSize().y};
+        Quadtree cursorQt(world, 6);
+        for (size_t i = 0; i < particles.size(); i++)
+            cursorQt.insert(particles[i].pos, i);
+
+        // Cursor logic (tidak berubah)
+        sf::Vector2i mouseI = sf::Mouse::getPosition(window);
+        sf::Vector2f mouse((float)mouseI.x, (float)mouseI.y);
+        float cursorRadius = 50.f;
 
         // Pull particles toward cursor
         for (auto& p : particles) {
             float dx = mouse.x - p.pos.x;
             float dy = mouse.y - p.pos.y;
             float dist = sqrt(dx*dx + dy*dy);
-            if (dist > 0 && dist < radius) {
-                float force = (radius - dist) * 1.0f;
+            if (dist > 0 && dist < cursorRadius) {
+                float force = (cursorRadius - dist) * 1.0f;
                 p.vel.x += dx / dist * force;
                 p.vel.y += dy / dist * force;
             }
@@ -293,10 +348,10 @@ int main() {
 
         // Draw
         window.clear(sf::Color(20, 20, 30));
-        if (useQuadtree) qt.draw(window);
+        if (useQuadtree) cursorQt.draw(window);
 
         for (auto& p : particles)
-            p.draw(window, sf::Color(200, 200, 200));
+            p.draw(window);
 
         // Draw cursor
         sf::CircleShape cursor(5.f);
@@ -305,18 +360,18 @@ int main() {
         cursor.setPosition(mouse);
         window.draw(cursor);
 
-        
-       // Draw UI
-    std::ostringstream speedStream;
-    speedStream << std::fixed << std::setprecision(1) << speedFactor;
+        // Draw UI dengan info collision checks
+        std::ostringstream speedStream;
+        speedStream << std::fixed << std::setprecision(1) << speedFactor;
 
-    uiText.setString(
-        "FPS: " + to_string(int(fps)) +
-        " | Particles: " + to_string(particles.size()) +
-        " | Mode: " + (useQuadtree ? "Quadtree" : "Brute Force") +
-        " | Speed: " + speedStream.str()
-);
-window.draw(uiText);
+        uiText.setString(
+            "FPS: " + to_string(int(fps)) +
+            " | Particles: " + to_string(particles.size()) +
+            " | Mode: " + (useQuadtree ? "Quadtree" : "Brute Force") +
+            " | Speed: " + speedStream.str() +
+            " | Collision Checks: " + to_string(collisionChecks)
+        );
+        window.draw(uiText);
 
         window.display();
     }
