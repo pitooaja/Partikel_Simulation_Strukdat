@@ -306,7 +306,7 @@ make
 ## 🎬 Demo
 
 **Video Demo:**
-[![Demo Video](https://youtu.be/QUmou1wXH84)
+[![Demo Video][(https://youtu.be/QUmou1wXH84)]
 
 *Click to watch full performance comparison demo*
 
@@ -399,7 +399,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 **Your Name**  
 📧 Email: fdwe2552@gmail.com  
-🌐 GitHub: [@pitooaja(https://github.com/pitooaja)
+🌐 GitHub: https://github.com/pitooaja
 
 ---
 
@@ -419,6 +419,7 @@ Made with ❤️ and C++
 
 
 </div>
+
 
 
 
