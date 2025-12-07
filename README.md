@@ -280,7 +280,8 @@ make
 ### Run
 
 ```bash
-./particle_sim
+./build.bat
+./main
 ```
 
 ---
@@ -419,6 +420,7 @@ Made with ❤️ and C++
 
 
 </div>
+
 
 
 
