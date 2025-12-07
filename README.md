@@ -306,7 +306,7 @@ make
 ## 🎬 Demo
 
 **Video Demo:**
-[![Demo Video](<!-- Failed to upload "Untitled video - Made with Clipchamp.mp4" -->)
+[![Demo Video](https://youtu.be/QUmou1wXH84)
 
 *Click to watch full performance comparison demo*
 
@@ -398,8 +398,8 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 ## 👨‍💻 Author
 
 **Your Name**  
-📧 Email: your.email@example.com  
-🌐 GitHub: [@yourusername](https://github.com/yourusername)
+📧 Email: fdwe2552@gmail.com  
+🌐 GitHub: [@yourusername](https://github.com/pitooaja)
 
 ---
 
@@ -419,4 +419,5 @@ Made with ❤️ and C++
 
 
 </div>
+
 
