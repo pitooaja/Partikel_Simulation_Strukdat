@@ -306,7 +306,7 @@ make
 ## 🎬 Demo
 
 **Video Demo:**
-[![Demo Video](https://img.youtube.com/vi/YOUR_VIDEO_ID/maxresdefault.jpg)](https://youtu.be/YOUR_VIDEO_ID)
+[![Demo Video](<!-- Failed to upload "Untitled video - Made with Clipchamp.mp4" -->)
 
 *Click to watch full performance comparison demo*
 
@@ -419,3 +419,4 @@ Made with ❤️ and C++
 
 
 </div>
+
