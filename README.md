@@ -294,7 +294,7 @@ make
 *500 particles - FPS drops to 20, visible lag & stuttering*
 
 ### 🟢 Quadtree - Optimized Performance
-![Quadtree Smooth](<img width="1653" height="857" alt="Image" src="https://github.com/user-attachments/assets/f0b6e0a8-52f6-456e-8fef-926ba28036a8" />)
+![Quadtree Smooth](QUADTREE.png)
 *500 particles - Stable 60 FPS, smooth & responsive*
 
 ### 📊 Side-by-Side Comparison
@@ -419,6 +419,7 @@ Made with ❤️ and C++
 
 
 </div>
+
 
 
 
